@@ -1,0 +1,76 @@
+Build a professional networking web application that serves as a federated, LinkedIn‑like platform for business networking groups. This app must have two primary components: the core application for user profiles, a services directory, and networking features; and a self‑service admin module that allows any user to create and manage their own server instance which federates with other instances using ActivityPub. Since full, enterprise‑grade ActivityPub and federation discovery is complex, start with a simplified, API‑based federation model that implements basic ActivityPub endpoints (/actor, /inbox, /outbox) following the standard as much as possible.
+
+Requirements:
+
+Core Application Features:
+
+User Profiles:
+• Enable users to create and edit detailed professional profiles including name, work history, education, skills, and a list of services offered.
+• Support rich media (images, links) and structured data.
+
+Services Directory:
+• Provide a searchable and filterable directory listing the services offered by users.
+• Allow filtering by industry, service type, and location.
+
+User Interface:
+• Create a professional, modern, LinkedIn‑like UI using a JavaScript framework (React or Vue) and a CSS framework (Tailwind CSS or Bootstrap).
+• Ensure responsiveness for both desktop and mobile views.
+
+Authentication:
+• Use Replit Auth for basic sign‑in and account management during the initial phase.
+
+Federation & ActivityPub Integration (Simplified):
+
+Basic ActivityPub Endpoints:
+• Implement the core endpoints (/actor, /inbox, /outbox) so that the server can send and receive basic federation activities (e.g., Follow, ProfileUpdate, ServiceOffer).
+• Ensure that your implementation follows the ActivityPub specification in a simplified manner so that it can interoperate with other ActivityPub servers (like Mastodon or Pleroma) in the future.
+
+API-Based Federation:
+• For now, design federation as an API module that exposes and accepts JSON‑formatted activities without requiring full-scale protocol bridging.
+• Provide logging and simple validation for incoming federation messages.
+
+Admin Self‑Service & Instance Creation:
+
+Onboarding Flow:
+• On the frontpage, include a “Become an Admin / Set Up Your Server” option that launches a guided setup wizard. • The wizard should prompt the user to:
+
+Choose a server name, description, and upload a logo (branding).
+
+Configure basic local policies: choose user registration mode (open, invite‑only, or admin‑approved), set mandatory profile fields, and configure default content moderation (automated keyword filtering with sensible defaults).
+
+Set federation rules: enable automatic sharing for certain activity types or require admin approval for outbound activities; allow setting whitelists/blacklists of external domains.
+
+Optionally, input a custom domain name to be used for the instance (include instructions on DNS and SSL certificate configuration, possibly using Let’s Encrypt).
+
+Admin Dashboard:
+• Once setup is complete, provide a dashboard for the admin to manage local server settings, view basic analytics (number of users, posts, federation interactions), and adjust federation and moderation controls. • Ensure the dashboard is intuitive, with tooltips and recommended default settings based on best practices.
+
+Backend Infrastructure & Deployment (Limited Scope):
+
+Backend Services:
+• Develop REST (or GraphQL) API endpoints for user profile management, services directory operations, and admin settings. • Use PostgreSQL as the primary database for profiles and service data; integrate Redis for caching.
+
+ActivityPub & Federation Module:
+• Modularize the ActivityPub logic so that federation functionality can be refined later by experts.
+
+Hosting & Deployment:
+• For the initial prototype, target deployment on Replit’s own infrastructure rather than Azure or other cloud providers. Generate Dockerfiles and basic deployment scripts that can later be adapted for Azure if needed. • Ensure the code is modular, well-documented, and includes unit tests for key functionalities (profile creation, search, federation endpoints).
+
+Integration with Replit Agent v2:
+
+Rapid Prototyping & Code Generation:
+• Use the agent to scaffold the project structure, generate the frontend and backend modules, and produce initial Dockerfiles and deployment configurations. • Include unit tests and inline documentation so that the generated code is understandable and modifiable.
+
+Iterative Development:
+• Design the project in a modular way so that the core UI, profile system, services directory, admin setup, and ActivityPub federation are separate modules that can be refined iteratively.
+
+Final Objective:
+Produce a working prototype of a federated professional networking platform that:
+
+Provides a professional, LinkedIn‑like user experience focused on rich professional profiles and a robust services directory.
+
+Implements a simplified ActivityPub server (inspired by Pleroma) to enable basic federation with other instances.
+
+Offers a self‑service, guided setup for admins to create and manage their own server instance, including custom domain input.
+
+Is initially deployable on Replit’s infrastructure with modular code that can later be adapted for full Azure deployment and advanced federation features.
