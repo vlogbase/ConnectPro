@@ -100,8 +100,9 @@ export class DatabaseStorage implements IStorage {
   constructor() {
     // Try to use PostgreSQL session store, fall back to memory store if needed
     try {
+      // Create PostgreSQL session store using the client object with query method
       this.sessionStore = new PostgresSessionStore({
-        pool: pool,
+        pool: client, // Use the client object with the query method
         createTableIfMissing: true
       });
     } catch (error) {
