@@ -147,23 +147,7 @@ export default function InstanceCreationModal({ open, onClose }: InstanceCreatio
     },
   });
 
-  // Update progress based on current step
-  useEffect(() => {
-    switch (currentStep) {
-      case "branding":
-        setProgress(25);
-        break;
-      case "policies":
-        setProgress(50);
-        break;
-      case "federation":
-        setProgress(75);
-        break;
-      case "domain":
-        setProgress(100);
-        break;
-    }
-  }, [currentStep]);
+  // The progress updates are now handled in the new useEffect below
 
   // Create instance mutation
   const createInstanceMutation = useMutation({
@@ -228,32 +212,110 @@ export default function InstanceCreationModal({ open, onClose }: InstanceCreatio
     createInstanceMutation.mutate(data);
   };
 
+  // Validation functions for each step
+  const validateBrandingStep = (): boolean => {
+    let isValid = true;
+    
+    // Validate name (required, min length)
+    if (!form.getValues("name") || form.getValues("name").length < 2) {
+      form.setError("name", { 
+        type: "required", 
+        message: "Server name must be at least 2 characters" 
+      });
+      isValid = false;
+    }
+    
+    // Validate description (optional, but if present, must be sensible)
+    const description = form.getValues("description");
+    if (description && description.length > 0 && description.length < 10) {
+      form.setError("description", {
+        type: "minLength",
+        message: "Description should be at least 10 characters if provided"
+      });
+      isValid = false;
+    }
+    
+    return isValid;
+  };
+  
+  const validatePoliciesStep = (): boolean => {
+    // In our case, all fields in the policies step have defaults,
+    // so validation always passes, but we could add more complex validation
+    return true;
+  };
+  
+  const validateFederationStep = (): boolean => {
+    let isValid = true;
+    
+    // If federation scope is allowlist, ensure there are domains in the allowlist
+    if (form.getValues("federationRules.federationScope") === "allowlist" && 
+        !form.getValues("federationRules.domainsText")) {
+      toast({
+        title: "Missing domains",
+        description: "Please add at least one domain to the allowlist",
+        variant: "destructive"
+      });
+      isValid = false;
+    }
+    
+    // If federation scope is blocklist, ensure there are domains in the blocklist
+    if (form.getValues("federationRules.federationScope") === "blocklist" && 
+        !form.getValues("federationRules.domainsText")) {
+      toast({
+        title: "Missing domains",
+        description: "Please add at least one domain to the blocklist",
+        variant: "destructive"
+      });
+      isValid = false;
+    }
+    
+    return isValid;
+  };
+  
+  const validateDomainStep = (): boolean => {
+    // Domain is optional, but if provided must be valid
+    const domain = form.getValues("domain");
+    if (domain && domain.length > 0) {
+      // Simple domain validation regex
+      const domainRegex = /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+      if (!domainRegex.test(domain)) {
+        form.setError("domain", {
+          type: "pattern",
+          message: "Please enter a valid domain name (e.g., example.com)"
+        });
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   // Navigation between steps
   const goToNextStep = () => {
-    // Validate the current step fields before proceeding
     let canProceed = true;
     
     switch(currentStep) {
       case "branding":
-        if (!form.getValues("name")) {
-          form.setError("name", { 
-            type: "required", 
-            message: "Server name is required" 
-          });
-          canProceed = false;
-        }
+        canProceed = validateBrandingStep();
         if (canProceed) setCurrentStep("policies");
         break;
         
       case "policies":
-        setCurrentStep("federation");
+        canProceed = validatePoliciesStep();
+        if (canProceed) setCurrentStep("federation");
         break;
         
       case "federation":
-        setCurrentStep("domain");
+        canProceed = validateFederationStep();
+        if (canProceed) setCurrentStep("domain");
         break;
         
       case "domain":
+        canProceed = validateDomainStep();
+        if (canProceed) setCurrentStep("summary");
+        break;
+        
+      case "summary":
         form.handleSubmit(onSubmit)();
         break;
     }
@@ -269,6 +331,9 @@ export default function InstanceCreationModal({ open, onClose }: InstanceCreatio
         break;
       case "domain":
         setCurrentStep("federation");
+        break;
+      case "summary":
+        setCurrentStep("domain");
         break;
     }
   };
@@ -875,6 +940,143 @@ export default function InstanceCreationModal({ open, onClose }: InstanceCreatio
   );
 
   // Render the current step content
+  // Render the summary step
+  const renderSummaryStep = () => {
+    const formValues = form.getValues();
+    
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-b from-primary/5 to-primary/10 p-6 rounded-lg border border-primary/20">
+          <h3 className="text-lg font-semibold text-center mb-4">Instance Summary</h3>
+          
+          {/* Instance Preview Card */}
+          <div className="bg-white rounded-md shadow-sm p-4 mb-6 border">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="h-16 w-16 rounded-md overflow-hidden bg-white shadow-sm border flex items-center justify-center">
+                {previewLogo ? (
+                  <img 
+                    src={previewLogo} 
+                    alt="Server logo" 
+                    className="h-full w-full object-cover" 
+                  />
+                ) : (
+                  <div className="h-full w-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
+                    {formValues.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div>
+                <h4 className="text-lg font-medium text-gray-900">{formValues.name}</h4>
+                <p className="text-sm text-gray-500 line-clamp-2">
+                  {formValues.description || "No description provided"}
+                </p>
+                {formValues.domain && (
+                  <p className="text-xs mt-1 text-primary">
+                    {formValues.domain}
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            {/* Configuration Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <h5 className="font-medium mb-2">Registration</h5>
+                <p className="flex items-center">
+                  <span className="capitalize">{formValues.registrationType}</span>
+                  {formValues.registrationType === "open" && (
+                    <Badge className="ml-2 bg-green-100 text-green-800 border-green-200">
+                      Open
+                    </Badge>
+                  )}
+                  {formValues.registrationType === "invite" && (
+                    <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200">
+                      Invite-only
+                    </Badge>
+                  )}
+                  {formValues.registrationType === "admin" && (
+                    <Badge className="ml-2 bg-purple-100 text-purple-800 border-purple-200">
+                      Admin Approval
+                    </Badge>
+                  )}
+                </p>
+              </div>
+              
+              <div>
+                <h5 className="font-medium mb-2">Content Moderation</h5>
+                <p>
+                  {formValues.contentModeration.enabled ? (
+                    <Badge className="bg-green-100 text-green-800 border-green-200">
+                      Enabled
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-gray-100 text-gray-800 border-gray-200">
+                      Disabled
+                    </Badge>
+                  )}
+                </p>
+              </div>
+              
+              <div>
+                <h5 className="font-medium mb-2">Required Profile Fields</h5>
+                <div className="flex flex-wrap gap-1">
+                  {formValues.requiredFields.firstName && (
+                    <Badge variant="outline" className="text-xs">First Name</Badge>
+                  )}
+                  {formValues.requiredFields.lastName && (
+                    <Badge variant="outline" className="text-xs">Last Name</Badge>
+                  )}
+                  {formValues.requiredFields.bio && (
+                    <Badge variant="outline" className="text-xs">Bio</Badge>
+                  )}
+                  {formValues.requiredFields.workHistory && (
+                    <Badge variant="outline" className="text-xs">Work History</Badge>
+                  )}
+                  {formValues.requiredFields.skills && (
+                    <Badge variant="outline" className="text-xs">Skills</Badge>
+                  )}
+                  {!formValues.requiredFields.firstName && 
+                   !formValues.requiredFields.lastName && 
+                   !formValues.requiredFields.bio && 
+                   !formValues.requiredFields.workHistory && 
+                   !formValues.requiredFields.skills && (
+                    <span className="text-gray-500 text-xs">No required fields</span>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h5 className="font-medium mb-2">Federation Scope</h5>
+                <p className="flex items-center">
+                  <span className="capitalize">{formValues.federationRules.federationScope}</span>
+                  {formValues.federationRules.federationScope === "all" && (
+                    <Badge className="ml-2 bg-green-100 text-green-800 border-green-200">
+                      Federation with all
+                    </Badge>
+                  )}
+                  {formValues.federationRules.federationScope === "allowlist" && (
+                    <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200">
+                      Allowlist only
+                    </Badge>
+                  )}
+                  {formValues.federationRules.federationScope === "blocklist" && (
+                    <Badge className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-200">
+                      Uses blocklist
+                    </Badge>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center text-sm text-gray-500">
+            <p>Please review your instance configuration before creating. You can go back to make changes or proceed to create your instance.</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case "branding":
@@ -885,6 +1087,8 @@ export default function InstanceCreationModal({ open, onClose }: InstanceCreatio
         return renderFederationStep();
       case "domain":
         return renderDomainStep();
+      case "summary":
+        return renderSummaryStep();
       default:
         return renderBrandingStep();
     }
@@ -892,62 +1096,127 @@ export default function InstanceCreationModal({ open, onClose }: InstanceCreatio
 
   // Get the appropriate button text based on the current step
   const getNextButtonText = () => {
-    return currentStep === "domain" ? "Create Instance" : "Continue";
+    if (currentStep === "summary") {
+      return "Create Instance";
+    } else if (currentStep === "domain") {
+      return "Review";
+    } else {
+      return "Continue";
+    }
   };
+
+  // Update progress based on current step
+  useEffect(() => {
+    switch (currentStep) {
+      case "branding":
+        setProgress(20);
+        break;
+      case "policies":
+        setProgress(40);
+        break;
+      case "federation":
+        setProgress(60);
+        break;
+      case "domain":
+        setProgress(80);
+        break;
+      case "summary":
+        setProgress(100);
+        break;
+    }
+  }, [currentStep]);
 
   // Step indicator component
   const StepIndicator = () => (
     <div className="mb-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between">
+        {/* Branding Step */}
         <div className="flex items-center space-x-2">
           <div 
             className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
-              currentStep === "branding" || progress >= 25 ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
+              currentStep === "branding" || progress >= 20 ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
             }`}
           >
             1
           </div>
           <span className={`text-sm ${currentStep === "branding" ? "text-primary font-medium" : "text-gray-500"}`}>Branding</span>
         </div>
-        <div className="h-0.5 flex-1 bg-gray-200 mx-2">
-          <div className="h-full bg-primary" style={{ width: `${Math.max(0, progress - 25)}%` }}></div>
+        <div className="h-0.5 flex-1 bg-gray-200 mx-2 hidden sm:block">
+          <div className="h-full bg-primary" style={{ width: `${Math.max(0, progress - 20)}%` }}></div>
         </div>
+        
+        {/* Policies Step */}
         <div className="flex items-center space-x-2">
           <div 
             className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
-              currentStep === "policies" || progress >= 50 ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
+              currentStep === "policies" || progress >= 40 ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
             }`}
           >
             2
           </div>
           <span className={`text-sm ${currentStep === "policies" ? "text-primary font-medium" : "text-gray-500"}`}>Policies</span>
         </div>
-        <div className="h-0.5 flex-1 bg-gray-200 mx-2">
-          <div className="h-full bg-primary" style={{ width: `${Math.max(0, progress - 50)}%` }}></div>
+        <div className="h-0.5 flex-1 bg-gray-200 mx-2 hidden sm:block">
+          <div className="h-full bg-primary" style={{ width: `${Math.max(0, progress - 40)}%` }}></div>
         </div>
+        
+        {/* Federation Step */}
         <div className="flex items-center space-x-2">
           <div 
             className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
-              currentStep === "federation" || progress >= 75 ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
+              currentStep === "federation" || progress >= 60 ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
             }`}
           >
             3
           </div>
           <span className={`text-sm ${currentStep === "federation" ? "text-primary font-medium" : "text-gray-500"}`}>Federation</span>
         </div>
-        <div className="h-0.5 flex-1 bg-gray-200 mx-2">
-          <div className="h-full bg-primary" style={{ width: `${Math.max(0, progress - 75)}%` }}></div>
+        <div className="h-0.5 flex-1 bg-gray-200 mx-2 hidden sm:block">
+          <div className="h-full bg-primary" style={{ width: `${Math.max(0, progress - 60)}%` }}></div>
         </div>
+        
+        {/* Domain Step */}
         <div className="flex items-center space-x-2">
           <div 
             className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
-              currentStep === "domain" ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
+              currentStep === "domain" || progress >= 80 ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
             }`}
           >
             4
           </div>
           <span className={`text-sm ${currentStep === "domain" ? "text-primary font-medium" : "text-gray-500"}`}>Domain</span>
         </div>
+        <div className="h-0.5 flex-1 bg-gray-200 mx-2 hidden sm:block">
+          <div className="h-full bg-primary" style={{ width: `${Math.max(0, progress - 80)}%` }}></div>
+        </div>
+        
+        {/* Summary Step */}
+        <div className="flex items-center space-x-2">
+          <div 
+            className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
+              currentStep === "summary" ? "bg-primary text-white" : "bg-gray-200 text-gray-500"
+            }`}
+          >
+            5
+          </div>
+          <span className={`text-sm ${currentStep === "summary" ? "text-primary font-medium" : "text-gray-500"}`}>Summary</span>
+        </div>
+      </div>
+      
+      {/* Mobile-friendly progress bar */}
+      <div className="mt-4 w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-primary transition-all duration-300 ease-in-out" 
+          style={{ width: `${progress}%` }}
+        ></div>
+      </div>
+      
+      {/* Current step indicator for mobile */}
+      <div className="mt-2 text-center text-xs text-gray-500">
+        Step {currentStep === "branding" ? "1" : 
+             currentStep === "policies" ? "2" : 
+             currentStep === "federation" ? "3" : 
+             currentStep === "domain" ? "4" : "5"} of 5
       </div>
     </div>
   );
