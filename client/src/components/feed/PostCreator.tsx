@@ -79,7 +79,7 @@ export default function PostCreator() {
           <div className="text-center py-4">
             <p className="text-gray-500 mb-3">Sign in to share posts with your network</p>
             <Button asChild variant="default">
-              <a href="/api/login">Log in with Replit</a>
+              <a href="/api/login">Log in</a>
             </Button>
           </div>
         </CardContent>

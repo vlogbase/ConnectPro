@@ -195,7 +195,7 @@ export default function InstanceSetup() {
               Please log in to create and manage your own instances.
             </p>
             <Button asChild>
-              <a href="/api/login">Log in with Replit</a>
+              <a href="/api/login">Log in</a>
             </Button>
           </CardContent>
         </Card>

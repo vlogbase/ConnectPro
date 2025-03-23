@@ -201,7 +201,7 @@ export default function ServiceForm({ serviceId, isEdit = false }: ServiceFormPr
         </CardContent>
         <CardFooter className="justify-center">
           <Button asChild>
-            <a href="/api/login">Log in with Replit</a>
+            <a href="/api/login">Log in</a>
           </Button>
         </CardFooter>
       </Card>

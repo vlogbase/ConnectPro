@@ -1,3 +1,8 @@
+// Add WebSocket polyfill for Neon database connection
+import { WebSocket } from 'ws';
+// @ts-ignore - Assign WebSocket to global for Neon database
+global.WebSocket = WebSocket;
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";

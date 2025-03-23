@@ -1,5 +1,5 @@
 import { users, workExperiences, educations, skills, userSkills, categories, services, posts, comments, reactions, instances, federatedInstances, activities } from "@shared/schema";
-import { db, pool, client } from "./db";
+import { db, pgClient } from "./db";
 import { eq, and, desc, like, or, inArray } from "drizzle-orm";
 import { type User, type InsertUser, type WorkExperience, type InsertWorkExperience, type Education, type InsertEducation, type Skill, type InsertSkill, type UserSkill, type InsertUserSkill, type Category, type InsertCategory, type Service, type InsertService, type Post, type InsertPost, type Comment, type InsertComment, type Reaction, type InsertReaction, type Instance, type InsertInstance, type FederatedInstance, type InsertFederatedInstance, type Activity, type InsertActivity } from "@shared/schema";
 import session from "express-session";
@@ -102,7 +102,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // Create PostgreSQL session store using the client object with query method
       this.sessionStore = new PostgresSessionStore({
-        pool: client, // Use the client object with the query method
+        pool: pgClient, // Use the pgClient object with the query method
         createTableIfMissing: true
       });
     } catch (error) {

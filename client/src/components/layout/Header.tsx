@@ -89,7 +89,7 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <Button asChild variant="default" className="ml-4">
-                <a href="/api/login">Log in with Replit</a>
+                <a href="/api/login">Log in</a>
               </Button>
             )}
           </div>

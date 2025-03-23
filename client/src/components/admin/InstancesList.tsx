@@ -27,7 +27,7 @@ export default function InstancesList() {
         </CardHeader>
         <CardContent className="text-center py-10">
           <Button asChild variant="default">
-            <a href="/api/login">Log in with Replit</a>
+            <a href="/api/login">Log in</a>
           </Button>
         </CardContent>
       </Card>
