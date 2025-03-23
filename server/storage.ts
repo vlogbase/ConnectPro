@@ -1,12 +1,14 @@
 import { users, workExperiences, educations, skills, userSkills, categories, services, posts, comments, reactions, instances, federatedInstances, activities } from "@shared/schema";
-import { db } from "./db";
+import { db, pool, client } from "./db";
 import { eq, and, desc, like, or, inArray } from "drizzle-orm";
 import { type User, type InsertUser, type WorkExperience, type InsertWorkExperience, type Education, type InsertEducation, type Skill, type InsertSkill, type UserSkill, type InsertUserSkill, type Category, type InsertCategory, type Service, type InsertService, type Post, type InsertPost, type Comment, type InsertComment, type Reaction, type InsertReaction, type Instance, type InsertInstance, type FederatedInstance, type InsertFederatedInstance, type Activity, type InsertActivity } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
 
-// Switch to MemoryStore for sessions since we're having issues with PostgreSQL store
+// Create stores for sessions
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User operations
@@ -89,16 +91,25 @@ export interface IStorage {
   getRecentActivities(limit: number): Promise<(Activity & { actor: User | undefined, instance: Instance })[]>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Use any type for session store to avoid type issues
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Use any type for session store to avoid type issues
   
   constructor() {
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // Prune expired entries every 24h
-    });
+    // Try to use PostgreSQL session store, fall back to memory store if needed
+    try {
+      this.sessionStore = new PostgresSessionStore({
+        pool: pool,
+        createTableIfMissing: true
+      });
+    } catch (error) {
+      console.warn("Failed to create PostgreSQL session store, falling back to memory store:", error);
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000, // Prune expired entries every 24h
+      });
+    }
   }
   
   // User operations
@@ -238,9 +249,10 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
     
+    const currentEndorsements = userSkill.endorsements || 0; // Handle null endorsements
     const [updatedUserSkill] = await db
       .update(userSkills)
-      .set({ endorsements: userSkill.endorsements + 1 })
+      .set({ endorsements: currentEndorsements + 1 })
       .where(eq(userSkills.id, userSkill.id))
       .returning();
     
