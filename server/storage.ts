@@ -3,9 +3,10 @@ import { db } from "./db";
 import { eq, and, desc, like, or, inArray } from "drizzle-orm";
 import { type User, type InsertUser, type WorkExperience, type InsertWorkExperience, type Education, type InsertEducation, type Skill, type InsertSkill, type UserSkill, type InsertUserSkill, type Category, type InsertCategory, type Service, type InsertService, type Post, type InsertPost, type Comment, type InsertComment, type Reaction, type InsertReaction, type Instance, type InsertInstance, type FederatedInstance, type InsertFederatedInstance, type Activity, type InsertActivity } from "@shared/schema";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import createMemoryStore from "memorystore";
 
-const PostgresSessionStore = connectPg(session);
+// Switch to MemoryStore for sessions since we're having issues with PostgreSQL store
+const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   // User operations
@@ -95,11 +96,8 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.SessionStore;
   
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      conObject: {
-        connectionString: process.env.DATABASE_URL!,
-      },
-      createTableIfMissing: true,
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // Prune expired entries every 24h
     });
   }
   
