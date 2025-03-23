@@ -1,0 +1,39 @@
+Enhance the self‑service instance creation flow in the application. Currently, there is a basic InstanceCreationModal component. I want you to refactor and extend it to be a multi‑step wizard with the following steps:
+
+Step 1 – Server Branding:
+
+Allow the admin to enter a server name, description, and upload a logo.
+
+Save these details and display a live preview of the branding on the wizard.
+
+Step 2 – Local Policies Configuration:
+
+Let the admin choose the user registration mode (options: Open, Invite‑only, or Admin‑approved).
+
+Provide toggles for required profile fields (e.g., first name, last name, bio).
+
+Add basic content moderation defaults (a field to specify keywords to filter).
+
+Step 3 – Federation Settings:
+
+Allow the admin to set federation rules:
+• Enable or disable automatic sharing of activities (such as service offers or profile updates) with other instances.
+• Provide an input for whitelisting or blacklisting external domains/servers.
+
+Include sensible defaults for these settings.
+
+Step 4 – Custom Domain Setup:
+
+Allow the admin to input a custom domain name for their server instance.
+
+Display instructions on how to configure DNS records and obtain an SSL certificate (using Let’s Encrypt as an example).
+
+Optionally, include a button that simulates checking domain connectivity (actual automation is not required for this MVP).
+
+After completing these steps, when the admin submits the wizard, the new instance should be created with all the provided configuration stored in the database, and the admin dashboard should update to show the newly created instance with its details (name, domain, registration mode, etc.).
+
+Also, update the admin dashboard to add a 'Settings' section where admins can later modify these configurations. Ensure that the UI remains professional and consistent with the existing LinkedIn‑like design.
+
+Finally, provide inline comments and documentation within the code changes to explain each step of the wizard and the corresponding configuration storage.
+
+Please generate the complete modified code for the InstanceCreationModal component and any related changes required in the admin dashboard and API endpoints to support these enhancements.
