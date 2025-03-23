@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Settings, ExternalLink } from "lucide-react";
 
 interface InstanceCardProps {
   instance: {
@@ -27,7 +29,7 @@ export default function InstanceCard({ instance }: InstanceCardProps) {
   // Get background color based on name (for visual variety)
   const getBackgroundColor = () => {
     const colors = [
-      'bg-primary-100',
+      'bg-primary/10',
       'bg-purple-100',
       'bg-blue-100',
       'bg-green-100',
@@ -47,7 +49,7 @@ export default function InstanceCard({ instance }: InstanceCardProps) {
   const getTextColor = () => {
     const bgColor = getBackgroundColor();
     const colorMap: Record<string, string> = {
-      'bg-primary-100': 'text-primary-600',
+      'bg-primary/10': 'text-primary',
       'bg-purple-100': 'text-purple-600',
       'bg-blue-100': 'text-blue-600',
       'bg-green-100': 'text-green-600',
@@ -58,10 +60,15 @@ export default function InstanceCard({ instance }: InstanceCardProps) {
     return colorMap[bgColor] || 'text-gray-600';
   };
 
+  // Prevent event propagation to avoid triggering the Link when clicking on buttons
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <li className="px-4 py-4 hover:bg-gray-50 cursor-pointer">
-      <Link href={`/admin/instances/${instance.id}`}>
-        <div className="flex items-center space-x-4">
+    <li className="px-4 py-4 hover:bg-gray-50">
+      <div className="flex items-center space-x-4">
+        <Link href={`/admin/instances/${instance.id}`} className="flex-1 flex items-center space-x-4">
           <div className="flex-shrink-0">
             <div className={`h-10 w-10 rounded-full ${getBackgroundColor()} flex items-center justify-center`}>
               <span className={`${getTextColor()} text-sm font-medium`}>{getInitials()}</span>
@@ -86,8 +93,24 @@ export default function InstanceCard({ instance }: InstanceCardProps) {
               </Badge>
             )}
           </div>
+        </Link>
+        <div className="flex items-center space-x-2 ml-2" onClick={handleButtonClick}>
+          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+            <Link href={`/admin/instances/${instance.id}/settings`}>
+              <span className="sr-only">Settings</span>
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+          {instance.domain && (
+            <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+              <a href={`https://${instance.domain}`} target="_blank" rel="noopener noreferrer">
+                <span className="sr-only">Visit</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+          )}
         </div>
-      </Link>
+      </div>
     </li>
   );
 }

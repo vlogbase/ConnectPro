@@ -43,7 +43,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
  * Define steps for the wizard
  * This helps with programmatic navigation through the instance creation process
  */
-type SetupStep = "branding" | "policies" | "federation" | "domain";
+type SetupStep = "branding" | "policies" | "federation" | "domain" | "summary";
 
 /**
  * Enhanced instance setup schema with additional configuration options
