@@ -14,7 +14,9 @@ import {
   insertCommentSchema,
   insertReactionSchema,
   insertInstanceSchema,
-  insertFederatedInstanceSchema
+  insertFederatedInstanceSchema,
+  type Post,
+  type Service
 } from "@shared/schema";
 import { createActor, processInboxActivity, createActivity } from "./activitypub";
 import { randomUUID } from "crypto";
@@ -816,8 +818,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalPosts: postsData.length,
         postsOverTime: createTimeSeriesData(timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 365, postsData),
         postsByType: [
-          { name: 'Text', value: postsData.filter(post => !post.mediaUrl).length },
-          { name: 'Media', value: postsData.filter(post => !!post.mediaUrl).length }
+          { name: 'Text', value: postsData.filter((post: Post) => !post.mediaUrl).length },
+          { name: 'Media', value: postsData.filter((post: Post) => !!post.mediaUrl).length }
         ]
       };
       
@@ -847,11 +849,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Group services by category
       const servicesByCategory = categories.map(category => ({
         name: category.name,
-        value: servicesData.filter(service => service.categoryId === category.id).length
+        value: servicesData.filter((service: Service) => service.categoryId === category.id).length
       })).filter(item => item.value > 0);
       
       // Add uncategorized if needed
-      const uncategorizedCount = servicesData.filter(service => !service.categoryId).length;
+      const uncategorizedCount = servicesData.filter((service: Service) => !service.categoryId).length;
       if (uncategorizedCount > 0) {
         servicesByCategory.push({ name: 'Uncategorized', value: uncategorizedCount });
       }

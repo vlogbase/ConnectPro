@@ -13,6 +13,83 @@ import { Badge } from "@/components/ui/badge";
 import InstanceSummaryCard from "@/components/instances/InstanceSummaryCard";
 import { format, subDays, startOfDay, endOfDay, startOfMonth, endOfMonth } from "date-fns";
 
+// Analytics data types
+interface TimeSeriesPoint {
+  date: string;
+  count: number;
+}
+
+interface ChartDataPoint {
+  name: string;
+  value: number;
+}
+
+interface FederatedInstance {
+  id: number;
+  name: string;
+  status: string;
+  domain?: string | null;
+  createdAt: string;
+}
+
+interface AnalyticsData {
+  userMetrics: {
+    total: number;
+    active: number;
+    growth: number;
+  };
+  contentMetrics: {
+    posts: number;
+    comments: number;
+    services: number;
+  };
+  newUsersData: TimeSeriesPoint[];
+  postsByType: ChartDataPoint[];
+  servicesByCategory: ChartDataPoint[];
+  federationStats: ChartDataPoint[];
+  activityByHour: { hour: number; activity: number }[];
+}
+
+// Instance API response types
+interface Instance {
+  id: number;
+  name: string;
+  description?: string | null;
+  adminId: number;
+  domain?: string | null;
+  active: boolean;
+  createdAt: string;
+  logo?: string | null;
+  contentPolicies?: any;
+  federationRules?: any;
+}
+
+// Analytics API response types
+interface UsersAnalytics {
+  totalUsers: number;
+  activeUsers: number;
+  growthRate: number;
+  usersOverTime: TimeSeriesPoint[];
+}
+
+interface PostsAnalytics {
+  totalPosts: number;
+  postsOverTime: TimeSeriesPoint[];
+  postsByType: ChartDataPoint[];
+}
+
+interface ServicesAnalytics {
+  totalServices: number;
+  servicesOverTime: TimeSeriesPoint[];
+  servicesByCategory: ChartDataPoint[];
+}
+
+interface FederationAnalytics {
+  totalConnections: number;
+  federationStats: ChartDataPoint[];
+  recentConnections: FederatedInstance[];
+}
+
 // Predefined colors for charts
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"];
 
@@ -46,7 +123,7 @@ export default function InstanceAnalytics() {
   }, [instanceId, authLoading, navigate]);
 
   // Fetch instance details
-  const { data: instance, isLoading: instanceLoading } = useQuery({
+  const { data: instance, isLoading: instanceLoading } = useQuery<Instance>({
     queryKey: [`/api/instances/${instanceId}`],
     enabled: !!instanceId,
   });
@@ -66,91 +143,74 @@ export default function InstanceAnalytics() {
   }, [isAdmin, instanceLoading, authLoading, navigate, toast]);
 
   // Fetch analytics data
-  const { data: usersData, isLoading: usersLoading } = useQuery({
+  const { data: usersData, isLoading: usersLoading } = useQuery<UsersAnalytics>({
     queryKey: [`/api/instances/${instanceId}/analytics/users`, timeRange],
-    enabled: !!instanceId && isAdmin,
+    enabled: !!instanceId && !!isAdmin,
   });
 
-  const { data: postsData, isLoading: postsLoading } = useQuery({
+  const { data: postsData, isLoading: postsLoading } = useQuery<PostsAnalytics>({
     queryKey: [`/api/instances/${instanceId}/analytics/posts`, timeRange],
-    enabled: !!instanceId && isAdmin,
+    enabled: !!instanceId && !!isAdmin,
   });
 
-  const { data: servicesData, isLoading: servicesLoading } = useQuery({
+  const { data: servicesData, isLoading: servicesLoading } = useQuery<ServicesAnalytics>({
     queryKey: [`/api/instances/${instanceId}/analytics/services`, timeRange],
-    enabled: !!instanceId && isAdmin,
+    enabled: !!instanceId && !!isAdmin,
   });
 
-  const { data: federationData, isLoading: federationLoading } = useQuery({
+  const { data: federationData, isLoading: federationLoading } = useQuery<FederationAnalytics>({
     queryKey: [`/api/instances/${instanceId}/analytics/federation`],
-    enabled: !!instanceId && isAdmin,
+    enabled: !!instanceId && !!isAdmin,
   });
 
-  // Prepare example data for dashboard (this would come from the backend in a real app)
-  const getDemoAnalyticsData = () => {
-    // Date range based on selected time range
-    let startDate = new Date();
-    let endDate = new Date();
-    const daysInTimeRange = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 365;
-    
-    // New users over time
-    const newUsersData = Array.from({ length: daysInTimeRange }).map((_, i) => {
-      const date = subDays(new Date(), daysInTimeRange - i - 1);
-      return {
-        date: format(date, 'MM/dd'),
-        users: Math.floor(Math.random() * 10) + 1,
-      };
-    });
-    
-    // Posts by type
-    const postsByType = [
-      { name: 'Text', value: Math.floor(Math.random() * 100) + 20 },
-      { name: 'Image', value: Math.floor(Math.random() * 80) + 10 },
-      { name: 'Link', value: Math.floor(Math.random() * 50) + 5 },
-    ];
-    
-    // Services by category
-    const servicesByCategory = [
-      { name: 'Development', value: Math.floor(Math.random() * 40) + 10 },
-      { name: 'Design', value: Math.floor(Math.random() * 30) + 5 },
-      { name: 'Marketing', value: Math.floor(Math.random() * 20) + 5 },
-      { name: 'Writing', value: Math.floor(Math.random() * 25) + 3 },
-    ];
-    
-    // Activity by hour
-    const activityByHour = Array.from({ length: 24 }).map((_, i) => ({
-      hour: i,
-      activity: Math.floor(Math.random() * 50) + 5,
-    }));
-    
-    // Federation stats
-    const federationStats = [
-      { name: 'Connected', value: Math.floor(Math.random() * 15) + 3 },
-      { name: 'Pending', value: Math.floor(Math.random() * 5) + 1 },
-      { name: 'Rejected', value: Math.floor(Math.random() * 3) },
-    ];
-    
-    return {
-      newUsersData,
-      postsByType,
-      servicesByCategory,
-      activityByHour,
-      federationStats,
+  // Prepare analytics data from API responses
+  const getAnalyticsData = () => {
+    // Default data structure with empty values
+    const defaultData = {
+      newUsersData: [],
+      postsByType: [],
+      servicesByCategory: [],
+      activityByHour: [],
+      federationStats: [],
       userMetrics: {
-        total: Math.floor(Math.random() * 1000) + 100,
-        active: Math.floor(Math.random() * 500) + 50,
-        growth: Math.floor(Math.random() * 30) + 1,
+        total: 0,
+        active: 0,
+        growth: 0,
       },
       contentMetrics: {
-        posts: Math.floor(Math.random() * 2000) + 200,
-        comments: Math.floor(Math.random() * 5000) + 500,
-        services: Math.floor(Math.random() * 300) + 30,
+        posts: 0,
+        comments: 0,
+        services: 0,
       }
     };
+    
+    // Fill with real data where available
+    if (usersData) {
+      defaultData.newUsersData = usersData.usersOverTime || [];
+      defaultData.userMetrics.total = usersData.totalUsers || 0;
+      defaultData.userMetrics.active = usersData.activeUsers || 0;
+      defaultData.userMetrics.growth = usersData.growthRate || 0;
+    }
+    
+    if (postsData) {
+      defaultData.postsByType = postsData.postsByType || [];
+      defaultData.contentMetrics.posts = postsData.totalPosts || 0;
+    }
+    
+    if (servicesData) {
+      defaultData.servicesByCategory = servicesData.servicesByCategory || [];
+      defaultData.contentMetrics.services = servicesData.totalServices || 0;
+    }
+    
+    if (federationData) {
+      defaultData.federationStats = federationData.federationStats || [];
+    }
+    
+    return defaultData;
   };
 
-  // Get demo data (would be replaced with real data from the API)
-  const analyticsData = getDemoAnalyticsData();
+  // Get real data from API responses
+  const analyticsData = getAnalyticsData();
 
   // Loading state
   if (authLoading || instanceLoading) {
@@ -530,27 +590,37 @@ export default function InstanceAnalytics() {
                   <CardDescription>Distribution of services offered</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={analyticsData.servicesByCategory}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {analyticsData.servicesByCategory.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {servicesLoading ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <Skeleton className="h-64 w-64 rounded-full" />
+                    </div>
+                  ) : analyticsData.servicesByCategory.length === 0 ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <p className="text-muted-foreground">No services data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={analyticsData.servicesByCategory}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {analyticsData.servicesByCategory.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
@@ -560,29 +630,36 @@ export default function InstanceAnalytics() {
                   <CardDescription>New services listed over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={analyticsData.newUsersData.map(item => ({
-                          date: item.date,
-                          services: Math.floor(item.users * 0.7),
-                        }))}
-                        margin={{
-                          top: 5,
-                          right: 30,
-                          left: 20,
-                          bottom: 5,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="services" stroke="#82ca9d" activeDot={{ r: 8 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {servicesLoading ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <Skeleton className="h-64 w-full" />
+                    </div>
+                  ) : servicesData?.servicesOverTime?.length === 0 ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <p className="text-muted-foreground">No services growth data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={servicesData?.servicesOverTime || []}
+                          margin={{
+                            top: 5,
+                            right: 30,
+                            left: 20,
+                            bottom: 5,
+                          }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="count" name="Services" stroke="#82ca9d" activeDot={{ r: 8 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               

@@ -324,6 +324,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(services.createdAt));
   }
   
+  async getServicesByInstanceId(instanceId: number): Promise<Service[]> {
+    // Since we don't have a direct relation between services and instances in the schema yet,
+    // we'll get services from users that belong to this instance
+    // This is a simplified approach for this implementation
+    const users = await this.getUsersByInstanceId(instanceId);
+    const userIds = users.map(user => user.id);
+    
+    if (userIds.length === 0) {
+      return [];
+    }
+    
+    return await db
+      .select()
+      .from(services)
+      .where(inArray(services.userId, userIds))
+      .orderBy(desc(services.createdAt));
+  }
+  
   async searchServices(query: string, categoryId?: number, location?: string): Promise<(Service & { user: User, category: Category | null })[]> {
     let dbQuery = db
       .select({
