@@ -8,7 +8,7 @@ import { TutorialProvider } from "@/components/onboarding/TutorialProvider";
 import { TutorialTooltip } from "@/components/onboarding/TutorialTooltip";
 
 import Home from "@/pages/home";
-import Profile from "@/pages/profile";
+import Profile from "@/pages/profile-new";
 import Services from "@/pages/services";
 import Admin from "@/pages/admin";
 import InstanceSetup from "@/pages/instance-setup";

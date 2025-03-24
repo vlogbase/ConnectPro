@@ -31,6 +31,7 @@ export default function Profile() {
   const [editWorkExpModal, setEditWorkExpModal] = useState(false);
   const [editEducationModal, setEditEducationModal] = useState(false);
   const [editSkillsModal, setEditSkillsModal] = useState(false);
+  const [activeProfileSection, setActiveProfileSection] = useState("about");
   
   // Determine if this is the current user's profile
   const userId = id ? parseInt(id) : user?.userId;
@@ -274,17 +275,17 @@ export default function Profile() {
               )}
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="about">
-                <TabsList className="border-b border-gray-200 w-full">
-                  <TabsTrigger value="about" className="text-sm font-medium">About</TabsTrigger>
-                  <TabsTrigger value="experience" className="text-sm font-medium">Experience</TabsTrigger>
-                  <TabsTrigger value="education" className="text-sm font-medium">Education</TabsTrigger>
-                  <TabsTrigger value="skills" className="text-sm font-medium">Skills</TabsTrigger>
-                  <TabsTrigger value="posts" className="text-sm font-medium">Posts</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="about" className="pt-4">
-                  {editMode ? (
+              <AnimatedProfileNavigation
+                activeSectionId={activeProfileSection}
+                onSectionChange={setActiveProfileSection}
+                sections={[
+                  {
+                    id: "about",
+                    label: "About",
+                    icon: <UserIcon className="h-4 w-4" />,
+                    content: (
+                      <div className="pt-4">
+                        {editMode ? (
                     <form id="profile-edit-form" onSubmit={handleProfileUpdate} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -539,8 +540,246 @@ export default function Profile() {
                       ))}
                     </div>
                   )}
-                </TabsContent>
-              </Tabs>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "experience",
+                    label: "Experience",
+                    icon: <BriefcaseIcon className="h-4 w-4" />,
+                    content: (
+                      <div className="pt-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">Work Experience</h3>
+                          {isCurrentUser && (
+                            <Button variant="outline" size="sm" onClick={() => setEditWorkExpModal(true)}>
+                              <i className="ri-add-line mr-1"></i> Add
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {workExpsLoading ? (
+                          <div className="space-y-6">
+                            {[1, 2].map((i) => (
+                              <div key={i} className="space-y-2">
+                                <Skeleton className="h-5 w-48" />
+                                <Skeleton className="h-4 w-64" />
+                                <Skeleton className="h-3 w-32" />
+                                <Skeleton className="h-4 w-full mt-2" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : workExperiences.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500">No work experience listed yet</p>
+                            {isCurrentUser && (
+                              <Button variant="outline" size="sm" className="mt-2" onClick={() => setEditWorkExpModal(true)}>
+                                Add Work Experience
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {workExperiences.map((exp: any) => (
+                              <AnimatedProfileCard key={exp.id} className="p-4 border border-gray-100">
+                                {isCurrentUser && (
+                                  <div className="absolute top-2 right-2 invisible group-hover:visible">
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <i className="ri-pencil-line"></i>
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500">
+                                      <i className="ri-delete-bin-line"></i>
+                                    </Button>
+                                  </div>
+                                )}
+                                <h4 className="text-base font-medium">{exp.title}</h4>
+                                <p className="text-sm">{exp.company}{exp.location ? ` · ${exp.location}` : ''}</p>
+                                <p className="text-xs text-gray-500">
+                                  {format(new Date(exp.startDate), 'MMM yyyy')} - {exp.current ? 'Present' : exp.endDate ? format(new Date(exp.endDate), 'MMM yyyy') : ''}
+                                </p>
+                                {exp.description && (
+                                  <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                                )}
+                              </AnimatedProfileCard>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  },
+                  {
+                    id: "education",
+                    label: "Education",
+                    icon: <GraduationCapIcon className="h-4 w-4" />,
+                    content: (
+                      <div className="pt-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">Education</h3>
+                          {isCurrentUser && (
+                            <Button variant="outline" size="sm" onClick={() => setEditEducationModal(true)}>
+                              <i className="ri-add-line mr-1"></i> Add
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {educationsLoading ? (
+                          <div className="space-y-6">
+                            {[1, 2].map((i) => (
+                              <div key={i} className="space-y-2">
+                                <Skeleton className="h-5 w-48" />
+                                <Skeleton className="h-4 w-64" />
+                                <Skeleton className="h-3 w-32" />
+                                <Skeleton className="h-4 w-full mt-2" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : educations.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500">No education listed yet</p>
+                            {isCurrentUser && (
+                              <Button variant="outline" size="sm" className="mt-2" onClick={() => setEditEducationModal(true)}>
+                                Add Education
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {educations.map((edu: any) => (
+                              <AnimatedProfileCard key={edu.id} className="p-4 border border-gray-100">
+                                {isCurrentUser && (
+                                  <div className="absolute top-2 right-2 invisible group-hover:visible">
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <i className="ri-pencil-line"></i>
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500">
+                                      <i className="ri-delete-bin-line"></i>
+                                    </Button>
+                                  </div>
+                                )}
+                                <h4 className="text-base font-medium">{edu.school}</h4>
+                                <p className="text-sm">{edu.degree}{edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}</p>
+                                <p className="text-xs text-gray-500">
+                                  {format(new Date(edu.startDate), 'yyyy')} - {edu.endDate ? format(new Date(edu.endDate), 'yyyy') : 'Present'}
+                                </p>
+                                {edu.description && (
+                                  <p className="text-sm text-gray-700 mt-2">{edu.description}</p>
+                                )}
+                              </AnimatedProfileCard>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  },
+                  {
+                    id: "skills",
+                    label: "Skills",
+                    icon: <LightbulbIcon className="h-4 w-4" />,
+                    content: (
+                      <div className="pt-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">Skills</h3>
+                          {isCurrentUser && (
+                            <Button variant="outline" size="sm" onClick={() => setEditSkillsModal(true)}>
+                              <i className="ri-add-line mr-1"></i> Add
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {skillsLoading ? (
+                          <div className="flex flex-wrap gap-2">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <Skeleton key={i} className="h-8 w-24 rounded-full" />
+                            ))}
+                          </div>
+                        ) : skills.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500">No skills listed yet</p>
+                            {isCurrentUser && (
+                              <Button variant="outline" size="sm" className="mt-2" onClick={() => setEditSkillsModal(true)}>
+                                Add Skills
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {skills.map((skill: any) => (
+                              <div key={skill.id} className="group relative">
+                                <AnimatedBadge color={skill.endorsements > 0 ? "primary" : "secondary"} className="py-1.5 text-sm">
+                                  {skill.skill.name}
+                                  {skill.endorsements > 0 && (
+                                    <span className="ml-1.5 text-xs bg-primary/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
+                                      {skill.endorsements}
+                                    </span>
+                                  )}
+                                </AnimatedBadge>
+                                {isCurrentUser && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0 absolute -top-1 -right-1 rounded-full bg-gray-200 text-gray-500 opacity-0 group-hover:opacity-100"
+                                  >
+                                    <i className="ri-close-line text-xs"></i>
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  },
+                  {
+                    id: "posts",
+                    label: "Posts",
+                    icon: <FileTextIcon className="h-4 w-4" />,
+                    content: (
+                      <div className="pt-4">
+                        {postsLoading ? (
+                          <>
+                            {[1, 2].map((i) => (
+                              <div key={i} className="mb-5">
+                                <div className="p-5 bg-white rounded-lg border border-gray-200">
+                                  <div className="flex items-center space-x-3">
+                                    <Skeleton className="h-10 w-10 rounded-full" />
+                                    <div>
+                                      <Skeleton className="h-4 w-32 mb-1" />
+                                      <Skeleton className="h-3 w-48" />
+                                    </div>
+                                  </div>
+                                  <div className="mt-4">
+                                    <Skeleton className="h-4 w-full mb-2" />
+                                    <Skeleton className="h-4 w-3/4" />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        ) : posts.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500">No posts yet</p>
+                          </div>
+                        ) : (
+                          <div>
+                            {posts.map((post: any) => (
+                              <PostCard key={post.id} post={post} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+                ];
+                
+                return (
+                  <AnimatedProfileNavigation
+                    activeSectionId={activeSection}
+                    onSectionChange={setActiveSection}
+                    sections={profileSections}
+                    className="animated-profile-tabs"
+                  />
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
