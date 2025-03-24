@@ -154,7 +154,11 @@ export default function Profile() {
         {/* Left column - Profile card and basic info */}
         <div className="md:col-span-4">
           {/* Profile Card */}
-          <ProfileCard userId={userId || 0} isCurrentUser={isCurrentUser} />
+          <ProfileCard 
+            userId={userId || 0} 
+            isCurrentUser={isCurrentUser} 
+            onEditProfile={() => setEditMode(true)} 
+          />
 
           {/* Services Card */}
           <Card className="mb-5">
