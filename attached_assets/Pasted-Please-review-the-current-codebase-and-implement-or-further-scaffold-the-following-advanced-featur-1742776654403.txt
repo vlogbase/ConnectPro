@@ -1,0 +1,59 @@
+Please review the current codebase and implement (or further scaffold) the following advanced features that are still pending. For each feature, provide inline commentary on the changes made and include any necessary documentation to explain your design choices:
+
+Personalized Onboarding Tutorial:
+
+Implement an interactive, step-by-step onboarding tutorial for new users.
+
+Use tooltips or modal pop-ups to guide users through key features (e.g., setting up their profile, creating posts, joining an instance, etc.).
+
+Ensure the onboarding experience is dismissible and does not reoccur for returning users.
+
+Micro-Animations for Profile Navigation:
+
+Add subtle animations and hover effects to profile navigation elements.
+
+For example, animate transitions when hovering over navigation items or switching between sections in the profile view.
+
+Animated Profile Interaction Badges:
+
+Create animated badges that appear (or animate) when a user receives a new endorsement, connection, or other interactions on their profile.
+
+Ensure the animations are smooth and match the overall professional design of the platform.
+
+Enhanced Analytics Dashboard for Instance Admins:
+
+Expand the current (partial) analytics dashboard (found in instance-analytics.tsx) to display more comprehensive metrics (e.g., user growth, post engagement, federation interactions, etc.).
+
+Incorporate charts or graphs (using a library like Recharts) to visualize the data.
+
+Provide detailed inline comments describing your implementation.
+
+Quick Action Floating Menu (FAB):
+
+Implement a floating action button that appears on key pages (e.g., the home feed) to provide quick access to common actions such as creating a post, joining an instance, or editing the profile.
+
+The menu should expand/collapse with smooth transitions and be clearly visible on both desktop and mobile views.
+
+Enhanced Custom Domain Support with SSL Guidance:
+
+Refine the custom domain setup in the instance creation flow by improving the UI for inputting a custom domain.
+
+Provide clear, user-friendly instructions or a step-by-step guide on configuring DNS records and obtaining an SSL certificate (e.g., via Let’s Encrypt).
+
+Validate the domain format where possible.
+
+Advanced Moderation Tools and Content Filtering:
+
+Expand the basic keyword filtering mechanism to support more advanced moderation options.
+
+Consider adding features such as multiple filter criteria, user reporting, or automated flagging of content.
+
+Clearly comment your code to explain how the moderation settings are stored and could be applied.
+
+Enhanced ActivityPub Protocol Implementation:
+
+Upgrade the current simplified ActivityPub logic (in activitypub.ts) to handle additional activity types (e.g., Follow, Like, Create, Update, Delete, etc.) and improve federation discovery where possible.
+
+Document the new endpoints and processing logic with inline comments so future developers can extend or modify the implementation.
+
+For each feature, if the full implementation is too large for one pass, provide detailed scaffolding or a clear plan outlining how the feature should be further developed. Ensure that all changes are consistent with the current code style and project structure.
