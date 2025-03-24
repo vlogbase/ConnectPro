@@ -3,14 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface ProfileCardProps {
   userId: number;
   isCurrentUser?: boolean;
+  onEditProfile?: () => void;
 }
 
-export default function ProfileCard({ userId, isCurrentUser = false }: ProfileCardProps) {
+export default function ProfileCard({ userId, isCurrentUser = false, onEditProfile }: ProfileCardProps) {
+  const [, navigate] = useLocation();
   const { user: authUser } = useAuth();
   
   // Fetch user details
@@ -113,7 +115,19 @@ export default function ProfileCard({ userId, isCurrentUser = false }: ProfileCa
         </div>
         <div className="mt-4">
           {isCurrentUser ? (
-            <Button className="w-full" variant="default">
+            <Button 
+              className="w-full" 
+              variant="default"
+              onClick={() => {
+                // If onEditProfile prop is provided, use it
+                if (onEditProfile) {
+                  onEditProfile();
+                } else {
+                  // Otherwise navigate to the profile edit page
+                  navigate(`/profile/${userId}/edit`);
+                }
+              }}
+            >
               Edit Profile
             </Button>
           ) : (
