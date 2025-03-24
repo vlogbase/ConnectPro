@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Settings, ExternalLink } from "lucide-react";
+import { Settings, ExternalLink, BarChart2 } from "lucide-react";
 
 interface InstanceCardProps {
   instance: {
@@ -95,14 +95,20 @@ export default function InstanceCard({ instance }: InstanceCardProps) {
           </div>
         </Link>
         <div className="flex items-center space-x-2 ml-2" onClick={handleButtonClick}>
-          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0" title="Analytics">
+            <Link href={`/admin/instances/${instance.id}/analytics`}>
+              <span className="sr-only">Analytics</span>
+              <BarChart2 className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0" title="Settings">
             <Link href={`/admin/instances/${instance.id}/settings`}>
               <span className="sr-only">Settings</span>
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
           {instance.domain && (
-            <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0" title="Visit Instance">
               <a href={`https://${instance.domain}`} target="_blank" rel="noopener noreferrer">
                 <span className="sr-only">Visit</span>
                 <ExternalLink className="h-4 w-4" />

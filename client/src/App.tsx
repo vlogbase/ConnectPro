@@ -9,6 +9,7 @@ import Services from "@/pages/services";
 import Admin from "@/pages/admin";
 import InstanceSetup from "@/pages/instance-setup";
 import InstanceSettings from "@/pages/instance-settings";
+import InstanceAnalytics from "@/pages/instance-analytics";
 import NotFound from "@/pages/not-found";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/services" component={Services} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/instances/:id/settings" component={InstanceSettings} />
+          <Route path="/admin/instances/:id/analytics" component={InstanceAnalytics} />
           <Route path="/instance-setup" component={InstanceSetup} />
           <Route component={NotFound} />
         </Switch>
