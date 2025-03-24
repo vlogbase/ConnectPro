@@ -19,36 +19,10 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      {/* Content tabs */}
-      <div className="border-b border-gray-200">
-        <Tabs defaultValue="home">
-          <TabsList className="-mb-px flex space-x-8" aria-label="Tabs">
-            <TabsTrigger 
-              value="home"
-              className="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm data-[state=active]:border-primary data-[state=active]:text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 data-[state=inactive]:hover:border-gray-300"
-            >
-              Home Feed
-            </TabsTrigger>
-            <TabsTrigger 
-              value="profile"
-              className="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm data-[state=active]:border-primary data-[state=active]:text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 data-[state=inactive]:hover:border-gray-300"
-            >
-              My Profile
-            </TabsTrigger>
-            <TabsTrigger 
-              value="services"
-              className="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm data-[state=active]:border-primary data-[state=active]:text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 data-[state=inactive]:hover:border-gray-300"
-            >
-              Services Directory
-            </TabsTrigger>
-            <TabsTrigger 
-              value="admin"
-              className="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm data-[state=active]:border-primary data-[state=active]:text-primary data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 data-[state=inactive]:hover:border-gray-300"
-            >
-              Admin Panel
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Page Title */}
+      <div className="border-b border-gray-200 pb-3 mb-4">
+        <h1 className="text-2xl font-semibold text-gray-900">Home Feed</h1>
+        <p className="text-sm text-gray-500 mt-1">Latest updates from your network</p>
       </div>
 
       {/* 3 Column Layout */}
