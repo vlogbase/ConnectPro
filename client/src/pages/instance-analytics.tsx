@@ -705,61 +705,76 @@ export default function InstanceAnalytics() {
                   <CardDescription>Connected and pending instances</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={analyticsData.federationStats}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {analyticsData.federationStats.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {federationLoading ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <Skeleton className="h-64 w-64 rounded-full" />
+                    </div>
+                  ) : analyticsData.federationStats.length === 0 ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <p className="text-muted-foreground">No federation data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={analyticsData.federationStats}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {analyticsData.federationStats.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
                   <CardTitle>Federation Activity</CardTitle>
-                  <CardDescription>Inter-instance engagement statistics</CardDescription>
+                  <CardDescription>Connected instances by status</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={[
-                          { type: 'Inbound Posts', count: Math.floor(Math.random() * 200) + 50 },
-                          { type: 'Outbound Posts', count: Math.floor(Math.random() * 150) + 30 },
-                          { type: 'Inbound Comments', count: Math.floor(Math.random() * 300) + 100 },
-                          { type: 'Outbound Comments', count: Math.floor(Math.random() * 250) + 80 },
-                        ]}
-                        margin={{
-                          top: 5,
-                          right: 30,
-                          left: 20,
-                          bottom: 5,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="type" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="count" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {federationLoading ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <Skeleton className="h-64 w-full" />
+                    </div>
+                  ) : !federationData?.federationStats?.length ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <p className="text-muted-foreground">No federation activity data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={federationData?.federationStats || []}
+                          margin={{
+                            top: 5,
+                            right: 30,
+                            left: 20,
+                            bottom: 5,
+                          }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar name="Instances" dataKey="value" fill="#8884d8" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
@@ -769,34 +784,49 @@ export default function InstanceAnalytics() {
                   <CardDescription>Federated instances and their statistics</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left pb-2">Instance</th>
-                          <th className="text-left pb-2">Status</th>
-                          <th className="text-left pb-2">Users</th>
-                          <th className="text-left pb-2">Shared Content</th>
-                          <th className="text-left pb-2">Last Active</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <tr key={i} className="border-b">
-                            <td className="py-3">instance-{i+1}.domain.com</td>
-                            <td className="py-3">
-                              <Badge variant="outline" className={i % 3 === 0 ? "bg-green-100 text-green-800" : i % 3 === 1 ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"}>
-                                {i % 3 === 0 ? "Connected" : i % 3 === 1 ? "Pending" : "Limited"}
-                              </Badge>
-                            </td>
-                            <td className="py-3">{Math.floor(Math.random() * 1000) + 200}</td>
-                            <td className="py-3">{Math.floor(Math.random() * 500) + 50}</td>
-                            <td className="py-3">{format(subDays(new Date(), Math.floor(Math.random() * 7)), 'MMM dd, yyyy')}</td>
+                  {federationLoading ? (
+                    <Skeleton className="h-72 w-full" />
+                  ) : federationData?.recentConnections?.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <p className="text-muted-foreground">No connected instances yet</p>
+                      <p className="text-sm mt-2">Federation connections will appear here once established</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left pb-2">Instance</th>
+                            <th className="text-left pb-2">Status</th>
+                            <th className="text-left pb-2">Domain</th>
+                            <th className="text-left pb-2">Connected Since</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {federationData?.recentConnections?.map((instance, i) => (
+                            <tr key={instance.id} className="border-b">
+                              <td className="py-3">{instance.name}</td>
+                              <td className="py-3">
+                                <Badge variant="outline" 
+                                  className={
+                                    instance.status === "connected" ? "bg-green-100 text-green-800" : 
+                                    instance.status === "pending" ? "bg-yellow-100 text-yellow-800" : 
+                                    "bg-blue-100 text-blue-800"
+                                  }
+                                >
+                                  {instance.status === "connected" ? "Connected" :
+                                   instance.status === "pending" ? "Pending" :
+                                   "Limited"}
+                                </Badge>
+                              </td>
+                              <td className="py-3">{instance.domain || '-'}</td>
+                              <td className="py-3">{format(new Date(instance.createdAt), 'MMM dd, yyyy')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
