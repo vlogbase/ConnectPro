@@ -16,6 +16,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  getUsersByInstanceId(instanceId: number): Promise<User[]>;
   
   // Work Experience operations
   createWorkExperience(workExp: InsertWorkExperience): Promise<WorkExperience>;
@@ -136,6 +137,27 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+  
+  async getUsersByInstanceId(instanceId: number): Promise<User[]> {
+    // Since we don't have a direct relation between users and instances in the schema,
+    // we'll retrieve users through their ownership of posts, services, etc. that belong to this instance
+    // This is a simplified approach for this implementation
+    return await db
+      .select()
+      .from(users)
+      .where(
+        or(
+          // Users who are admins of this instance
+          eq(users.id, db.select({ id: instances.adminId }).from(instances).where(eq(instances.id, instanceId))),
+          // Users who are active in this instance in some way
+          inArray(
+            users.id,
+            db.select({ userId: posts.userId }).from(posts).where(eq(posts.instanceId, instanceId))
+          )
+        )
+      )
+      .orderBy(desc(users.createdAt));
   }
   
   // Work Experience operations
@@ -381,6 +403,24 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(posts)
       .where(eq(posts.userId, userId))
+      .orderBy(desc(posts.createdAt));
+  }
+  
+  async getPostsByInstanceId(instanceId: number): Promise<Post[]> {
+    // Since we don't have a direct relation between posts and instances in the schema yet,
+    // we'll get posts from users that belong to this instance
+    // This is a simplified approach for this implementation
+    const users = await this.getUsersByInstanceId(instanceId);
+    const userIds = users.map(user => user.id);
+    
+    if (userIds.length === 0) {
+      return [];
+    }
+    
+    return await db
+      .select()
+      .from(posts)
+      .where(inArray(posts.userId, userIds))
       .orderBy(desc(posts.createdAt));
   }
   

@@ -21,6 +21,27 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { format, subDays } from "date-fns";
+
+// Helper function to create time series data for analytics
+function createTimeSeriesData(daysRange: number, data: any[]) {
+  const now = new Date();
+  return Array.from({ length: daysRange }).map((_, i) => {
+    const date = subDays(now, daysRange - i - 1);
+    const formattedDate = format(date, 'MM/dd');
+    
+    // Count items created on this date
+    const count = data.filter(item => {
+      const itemDate = new Date(item.createdAt);
+      return format(itemDate, 'MM/dd') === formattedDate;
+    }).length;
+    
+    return {
+      date: formattedDate,
+      count
+    };
+  });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up Authentication
@@ -577,6 +598,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Instance Analytics Routes
+  app.get('/api/instances/:id/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const instanceId = parseInt(req.params.id);
+      const instance = await storage.getInstanceById(instanceId);
+      
+      if (!instance) {
+        return res.status(404).json({ message: 'Instance not found' });
+      }
+      
+      // Check if user is admin of this instance
+      if (instance.adminId !== req.user.userId) {
+        return res.status(403).json({ message: 'Not authorized to view analytics for this instance' });
+      }
+      
+      // Get all data needed for analytics
+      const users = await storage.getUsersByInstanceId(instanceId);
+      const activities = await storage.getActivitiesByInstanceId(instanceId);
+      const federations = await storage.getFederationsByInstanceId(instanceId);
+      
+      // Create time series data for user growth (last 30 days)
+      const userGrowthData = createTimeSeriesData(30, users);
+      
+      // Create time series data for activities (last 30 days)
+      const activityData = createTimeSeriesData(30, activities);
+      
+      // Calculate activity by type
+      const activityByType = activities.reduce((acc: Record<string, number>, activity) => {
+        const type = activity.type || 'Unknown';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
+      
+      // Federation status metrics
+      const federationMetrics = {
+        total: federations.length,
+        active: federations.filter(fed => fed.status === 'active').length,
+        pending: federations.filter(fed => fed.status === 'pending').length,
+        rejected: federations.filter(fed => fed.status === 'rejected').length
+      };
+      
+      res.json({
+        users: {
+          total: users.length,
+          growth: userGrowthData
+        },
+        activities: {
+          total: activities.length,
+          byType: activityByType,
+          recent: activityData
+        },
+        federation: federationMetrics,
+        instance: {
+          name: instance.name,
+          createdAt: instance.createdAt,
+          domain: instance.domain
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+  
   app.get('/api/users/:id/instances', async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
@@ -670,6 +754,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const instanceId = parseInt(req.params.instanceId);
       const activities = await storage.getActivitiesByInstanceId(instanceId);
       res.json(activities);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+  
+  // Analytics Routes
+  app.get('/api/instances/:instanceId/analytics/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const instanceId = parseInt(req.params.instanceId);
+      const timeRange = req.query.timeRange || 'week';
+      
+      // Verify the user is an admin of this instance
+      const instance = await storage.getInstanceById(instanceId);
+      if (!instance || instance.adminId !== req.user.userId) {
+        return res.status(403).json({ message: 'Not authorized to view analytics for this instance' });
+      }
+      
+      // For now return sample data, to be replaced with actual data from database
+      const now = new Date();
+      const daysInRange = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 365;
+      
+      // Get users for this instance and their registration dates
+      const usersData = await storage.getUsersByInstanceId(instanceId);
+      
+      // Format response
+      const formattedData = {
+        totalUsers: usersData.length,
+        activeUsers: Math.floor(usersData.length * 0.7), // Consider 70% of users active for demo
+        newUsers: usersData.filter(user => {
+          const createdAt = new Date(user.createdAt);
+          const diffTime = Math.abs(now.getTime() - createdAt.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays <= daysInRange;
+        }).length,
+        usersOverTime: createTimeSeriesData(daysInRange, usersData)
+      };
+      
+      res.json(formattedData);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+  
+  app.get('/api/instances/:instanceId/analytics/posts', isAuthenticated, async (req: any, res) => {
+    try {
+      const instanceId = parseInt(req.params.instanceId);
+      const timeRange = req.query.timeRange || 'week';
+      
+      // Verify the user is an admin of this instance
+      const instance = await storage.getInstanceById(instanceId);
+      if (!instance || instance.adminId !== req.user.userId) {
+        return res.status(403).json({ message: 'Not authorized to view analytics for this instance' });
+      }
+      
+      // Get posts for this instance
+      const postsData = await storage.getPostsByInstanceId(instanceId);
+      
+      // Format response
+      const formattedData = {
+        totalPosts: postsData.length,
+        postsOverTime: createTimeSeriesData(timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 365, postsData),
+        postsByType: [
+          { name: 'Text', value: postsData.filter(post => !post.mediaUrl).length },
+          { name: 'Media', value: postsData.filter(post => !!post.mediaUrl).length }
+        ]
+      };
+      
+      res.json(formattedData);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+  
+  app.get('/api/instances/:instanceId/analytics/services', isAuthenticated, async (req: any, res) => {
+    try {
+      const instanceId = parseInt(req.params.instanceId);
+      const timeRange = req.query.timeRange || 'week';
+      
+      // Verify the user is an admin of this instance
+      const instance = await storage.getInstanceById(instanceId);
+      if (!instance || instance.adminId !== req.user.userId) {
+        return res.status(403).json({ message: 'Not authorized to view analytics for this instance' });
+      }
+      
+      // Get services for this instance
+      const servicesData = await storage.getServicesByInstanceId(instanceId);
+      
+      // Get categories for grouping
+      const categories = await storage.getCategories();
+      
+      // Group services by category
+      const servicesByCategory = categories.map(category => ({
+        name: category.name,
+        value: servicesData.filter(service => service.categoryId === category.id).length
+      })).filter(item => item.value > 0);
+      
+      // Add uncategorized if needed
+      const uncategorizedCount = servicesData.filter(service => !service.categoryId).length;
+      if (uncategorizedCount > 0) {
+        servicesByCategory.push({ name: 'Uncategorized', value: uncategorizedCount });
+      }
+      
+      // Format response
+      const formattedData = {
+        totalServices: servicesData.length,
+        servicesOverTime: createTimeSeriesData(timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 365, servicesData),
+        servicesByCategory
+      };
+      
+      res.json(formattedData);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+  
+  app.get('/api/instances/:instanceId/analytics/federation', isAuthenticated, async (req: any, res) => {
+    try {
+      const instanceId = parseInt(req.params.instanceId);
+      
+      // Verify the user is an admin of this instance
+      const instance = await storage.getInstanceById(instanceId);
+      if (!instance || instance.adminId !== req.user.userId) {
+        return res.status(403).json({ message: 'Not authorized to view analytics for this instance' });
+      }
+      
+      // Get federation data
+      const federationsData = await storage.getFederationsByInstanceId(instanceId);
+      
+      // Group by status
+      const federationStats = [
+        { name: 'Connected', value: federationsData.filter(fed => fed.status === 'active').length },
+        { name: 'Pending', value: federationsData.filter(fed => fed.status === 'pending').length },
+        { name: 'Rejected', value: federationsData.filter(fed => fed.status === 'rejected').length }
+      ];
+      
+      // Format response
+      const formattedData = {
+        totalConnections: federationsData.length,
+        federationStats,
+        recentConnections: federationsData
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5)
+      };
+      
+      res.json(formattedData);
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
     }
