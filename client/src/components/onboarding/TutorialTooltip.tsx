@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useTutorial, TutorialStep } from './TutorialProvider';
+import { useTutorial, TutorialStep, TUTORIAL_STEPS } from './TutorialProvider';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';

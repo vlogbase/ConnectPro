@@ -18,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import ProfileCard from "@/components/profile/ProfileCard";
 import PostCard from "@/components/feed/PostCard";
 import { format } from "date-fns";
+import { AnimatedProfileNavigation, AnimatedBadge, AnimatedProfileCard } from "@/components/profile/AnimatedProfileNavigation";
+import { BriefcaseIcon, GraduationCapIcon, LightbulbIcon, FileTextIcon, UserIcon } from "lucide-react";
 
 export default function Profile() {
   const { id } = useParams();
