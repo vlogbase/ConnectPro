@@ -22,6 +22,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/profile/:id?" component={Profile} />
+          <Route path="/profile/:id?/edit" component={Profile} />
           <Route path="/services" component={Services} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/instances/:id/settings" component={InstanceSettings} />

@@ -1,0 +1,78 @@
+Context / Goals:
+
+Fix Existing UI/UX Issues:
+
+The “Edit Profile” button currently sends users to a “My Profile” route that returns a 404 error. Make sure the profile page is properly routed (no more 404) and that users can edit their profile details.
+
+There are two sets of tabs:
+
+One at the top: (Home, My Profile, Services, Admin Panel)
+
+Another set below: (Home Feed, My Profile, Services Directory, Admin Panel).
+We only need one consistent set of tabs (or a single navigation system). Merge or remove duplicates and ensure all tab links/labels are correct and lead to the correct content or pages.
+
+Implement or Plan Additional Features (the ones not yet ticked):
+
+Personalized onboarding tutorial with interactive tooltips.
+
+Micro-animations for profile navigation (e.g., subtle transitions or hover effects).
+
+Animated profile interaction badges (e.g., badges that appear when a user endorses a skill, connects, or interacts).
+
+Analytics dashboard for instance admins (stats like user growth, posts, engagement).
+
+Quick action floating menu with smooth transitions (possibly a FAB or floating button for common actions).
+
+Custom domain support with SSL configuration (some partial code is there, but we need a final, end-to-end flow).
+
+Advanced moderation tools and content filtering (beyond the basic keyword filter).
+
+Full ActivityPub protocol for enhanced federation (beyond the current simplified version).
+
+Other Enhancements:
+
+Rename or remove any references to “Log in with Replit” so it’s just “Log in” or “ConnectPro” if that hasn’t been fully changed yet.
+
+For the Instances section, add a “Join Instance” button that’s more prominent than “Create New Instance” (most people will join, not create). Allow invite codes or show open servers.
+
+Provide all relevant code changes (frontend and backend) and inline commentary.
+
+Instructions:
+
+Update the routing so that the “Edit Profile” button actually displays a valid profile edit page (no 404).
+
+Unify the navigation to avoid duplicate tabs. Make sure the final navigation only has one set of tabs or one top navbar, containing:
+
+Home (or Home Feed)
+
+My Profile
+
+Services (or Services Directory)
+
+Admin Panel
+
+Implement or scaffold the 8 unticked suggestions from the suggestions list. Provide either code or a plan if the feature is too big for a single pass.
+
+Add the “Join Instance” button & flow for invite codes / open-server listing.
+
+Replace or remove references to “Log in with Replit,” so it’s just “Log in” or “ConnectPro.”
+
+Explain each major change or new file in comments.
+
+Deliverables:
+
+Updated routing & navigation (fix 404, remove duplicate tabs).
+
+Profile editing logic/page.
+
+Join Instance button & flow.
+
+Implement or outline the 8 unticked features.
+
+Updated references to “Log in with Replit” → “Log in” or “ConnectPro.”
+
+Comments in the code explaining what you changed.
+
+Objective:
+“Complete all tasks for a consistent user experience, unify the UI, fix the 404 and duplicate tabs, and lay the groundwork for advanced features like full ActivityPub compliance, improved moderation, and onboarding.”
+

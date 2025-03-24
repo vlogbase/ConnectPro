@@ -21,11 +21,11 @@ import { format } from "date-fns";
 
 export default function Profile() {
   const { id } = useParams();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(location.includes("/edit"));
   const [editWorkExpModal, setEditWorkExpModal] = useState(false);
   const [editEducationModal, setEditEducationModal] = useState(false);
   const [editSkillsModal, setEditSkillsModal] = useState(false);
@@ -44,7 +44,17 @@ export default function Profile() {
       });
       navigate("/");
     }
-  }, [id, authLoading, user, navigate, toast]);
+    
+    // If trying to edit someone else's profile, redirect to view mode
+    if (location.includes("/edit") && !isCurrentUser && !authLoading) {
+      toast({
+        title: "Permission denied",
+        description: "You can only edit your own profile",
+        variant: "destructive",
+      });
+      navigate(`/profile/${id || ''}`);
+    }
+  }, [id, authLoading, user, navigate, toast, location, isCurrentUser]);
 
   // Fetch user details
   const { data: profileUser, isLoading: profileLoading } = useQuery({
